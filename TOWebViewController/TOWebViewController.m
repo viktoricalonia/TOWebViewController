@@ -153,6 +153,10 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
 /* See if we need to revert the navigation bar to 'hidden' when we pop from a navigation controller */
 @property (nonatomic,assign) BOOL hideNavBarOnClose;
 
+@property (nonatomic,strong) NSString *titleText;
+
+@property (nonatomic,weak) UILabel *titleTextLabel;
+
 /* Perform all common setup steps */
 - (void)setup;
 
@@ -463,6 +467,8 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
     [self.forwardButton     addTarget:self action:@selector(forwardButtonTapped:)       forControlEvents:UIControlEventTouchUpInside];
     [self.reloadStopButton  addTarget:self action:@selector(reloadStopButtonTapped:)    forControlEvents:UIControlEventTouchUpInside];
     [self.actionButton      addTarget:self action:@selector(actionButtonTapped:)        forControlEvents:UIControlEventTouchUpInside];
+
+    [self setupTitleView];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -763,7 +769,7 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
 
     //see if we can set the proper page title at this point
     if (self.showPageTitles)
-        self.title = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+        self.titleText = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -1073,7 +1079,7 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
             NSString *url = [self.url absoluteString];
             url = [url stringByReplacingOccurrencesOfString:@"http://" withString:@""];
             url = [url stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-            self.title = url;
+            self.titleText = url;
         } 
         
         if (self.reloadStopButton)
@@ -1100,7 +1106,7 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
     
     //in case it didn't succeed yet, try setting the page title again
     if (self.showPageTitles)
-        self.title = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+        self.titleText = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
     
     if (self.reloadStopButton)
         [self.reloadStopButton setImage:self.reloadIcon forState:UIControlStateNormal];
@@ -1173,7 +1179,7 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
         
         //see if we can set the proper page title yet
         if (self.showPageTitles)
-            self.title = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+            self.titleText = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
         
         //if we're matching the view BG to the web view, update the background colour now
         if (self.hideWebViewBoundaries)
@@ -1729,6 +1735,35 @@ static const float kAfterInteractiveMaxProgressValue    = 0.9f;
     
     //Try and restart device rotation
     [UIViewController attemptRotationToDeviceOrientation];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark TitleText Methods
+
+- (void)setupTitleView {
+  UILabel *titleLabel = [UILabel.alloc init];
+  titleLabel.font = [UIFont boldSystemFontOfSize:18.f];
+  self.navigationItem.titleView = titleLabel;
+  titleLabel.frame = ({
+    CGRect frame = CGRectZero;
+    frame.size.height = self.navigationBar.frame.size.height;
+    frame;
+  });
+  titleLabel.textAlignment = NSTextAlignmentCenter;
+  titleLabel.center = self.navigationBar.center;
+  self.titleTextLabel = titleLabel;
+
+  titleLabel.userInteractionEnabled = YES;
+  [titleLabel addGestureRecognizer:[UITapGestureRecognizer.alloc initWithTarget:self action:@selector(didTapTitleText:)]];
+}
+
+- (void)setTitleText:(NSString *)titleText {
+  self.titleTextLabel.text = titleText;
+}
+
+- (void)didTapTitleText:(UITapGestureRecognizer *)recognizer {
+  if (self.didTapTitleTextHandler)
+    self.didTapTitleTextHandler();
 }
 
 @end

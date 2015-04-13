@@ -139,6 +139,11 @@
  */
 @property (nonatomic,copy)      BOOL (^shouldStartLoadRequestHandler)(NSURLRequest *request, UIWebViewNavigationType navigationType);
 
+/**
+ Handler for tapping navigation bar title view
+ */
+@property (nonatomic,copy)      void (^didTapTitleTextHandler)(void);
+
 /** 
  This can be used to override the default tint color of the navigation button icons.
  */
